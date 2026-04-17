@@ -219,7 +219,13 @@ export function Sidebar() {
       </div>
 
       {/* Mobile Toggle Button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-surface border-b border-border flex items-center justify-between px-4 z-40 mobile-chat-header">
+      <div 
+        style={{ 
+          paddingTop: 'env(safe-area-inset-top)',
+          height: 'calc(3.5rem + env(safe-area-inset-top))'
+        }}
+        className="lg:hidden fixed top-0 left-0 right-0 bg-surface border-b border-border flex items-center justify-between px-4 z-40 mobile-chat-header"
+      >
         {/* Left: Back Button (Only show if in a sub-route) */}
         {location.pathname.startsWith('/chat/') ? (
           <button 

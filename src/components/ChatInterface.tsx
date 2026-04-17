@@ -281,8 +281,12 @@ export function ChatInterface() {
     return (
       <div 
         ref={containerRef}
-        style={{ height: viewportHeight, transform: `translateY(${viewportOffset}px)` }}
-        className="chat-viewport flex-1 flex flex-col bg-surface relative overflow-hidden pt-14 lg:pt-0"
+        style={{ 
+          height: viewportHeight, 
+          transform: `translateY(${viewportOffset}px)`,
+          paddingTop: 'calc(3.5rem + env(safe-area-inset-top))'
+        }}
+        className="chat-viewport flex-1 flex flex-col bg-surface relative overflow-hidden lg:pt-0"
       >
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <div className="w-full max-w-3xl">
@@ -299,8 +303,12 @@ export function ChatInterface() {
     <div 
       id="chat-interface-container" 
       ref={containerRef}
-      style={{ height: viewportHeight, transform: `translateY(${viewportOffset}px)` }}
-      className="chat-viewport flex-1 flex flex-col bg-surface relative overflow-hidden pt-14 lg:pt-0"
+      style={{ 
+        height: viewportHeight, 
+        transform: `translateY(${viewportOffset}px)`,
+        paddingTop: 'calc(3.5rem + env(safe-area-inset-top))'
+      }}
+      className="chat-viewport flex-1 flex flex-col bg-surface relative overflow-hidden lg:pt-0"
     >
       {/* Chat Messages */}
       <div 
