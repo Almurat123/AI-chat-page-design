@@ -255,7 +255,6 @@ export function ChatInterface() {
           }}
           placeholder="输入以进行后续修改"
           className="chat-input w-full px-2 py-[8px] bg-transparent text-[16px] outline-none placeholder-[var(--muted)]"
-          autoFocus
           enterKeyHint="send"
           inputMode="text"
           autoComplete="off"
