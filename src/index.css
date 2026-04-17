@@ -64,9 +64,10 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Lock global scroll */
-  position: fixed; /* Extra lock for iOS */
+  overflow: hidden; 
   width: 100%;
+  /* Professional: Prevent pull-to-refresh and body bounce */
+  overscroll-behavior: none;
   /* Fix safe area for notched devices */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
@@ -81,9 +82,11 @@ body {
   transition: background-color 0.3s, color 0.3s;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Disable system default behaviors */
+  /* Professional: Disable system default behaviors */
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
+  /* Ensure smooth scrolling inside sub-containers */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* UI Elements that should not be selectable or long-pressable */

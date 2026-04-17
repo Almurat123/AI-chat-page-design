@@ -79,14 +79,14 @@ export default function App() {
       <Routes>
         {/* Chat Interface Routes */}
         <Route path="/" element={
-          <div id="app-root-container" className="flex h-screen w-screen overflow-hidden bg-background text-foreground transition-colors duration-300">
+          <div id="app-root-container" className="flex h-[100dvh] w-full overflow-hidden bg-background text-foreground transition-colors duration-300">
             <Sidebar />
             <HomeWrapper />
           </div>
         } />
         
         <Route path="/chat/:sessionId" element={
-          <div id="app-root-container" className="flex h-screen w-screen overflow-hidden bg-background text-foreground transition-colors duration-300">
+          <div id="app-root-container" className="flex h-[100dvh] w-full overflow-hidden bg-background text-foreground transition-colors duration-300">
             <Sidebar />
             <ChatWrapper />
           </div>

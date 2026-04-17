@@ -1,17 +1,18 @@
 // CONTEXT MEMORY
 // Updated: 2026-04-17
 // Author: Antigravity
-// Reason: 适配 iOS 移动端浏览器软键盘。iOS Safari 弹出键盘时不调整 Layout Viewport，需通过 Visual Viewport API 修正位置。
-// Goal: 确保键盘弹出时输入框吸顶于键盘，且聊天记录区域不被遮挡。
-// Owns: 聊天界面的视口适配逻辑。
+// Reason: 修复 iOS 软键盘收起后布局无法归位的问题。移除过度的 Body 锁定，增加失焦强制重置位移逻辑。
+// Goal: 确保键盘弹出时输入框可见，收起后界面完整回弹，无残余位移。
+// Owns: 聊天界面的视口适配与位移补偿。
 // Document Provenance:
-// - Source: Visual Viewport API Spec / MDN
-// - Kind: Web API Reference
+// - Source: Runtime observation on iOS Safari
+// - Kind: Bug fix logic
 // - Retrieved: 2026-04-17
-// - Applied To: ChatInterface layout container and input offset
-// - Verification: Verified via logic (using offsetTop and height)
+// - Applied To: Visual Viewport adaptation and input blur reset
+// - Verification: Logic verified for offset reset
 // See also:
 // - system-journal/INDEX.md
+// - system-journal/fix-log/2026-04-17-ios-layout-reset.md
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Plus as PlusIcon, ArrowUp, ChevronDown } from 'lucide-react';
@@ -56,10 +57,16 @@ export function ChatInterface() {
       const viewport = window.visualViewport;
       if (!viewport) return;
       
-      // offsetTop is the distance the visual viewport has been panned/scrolled 
-      // relative to the layout viewport (usually by the keyboard)
+      // On iOS, offsetTop is > 0 when the keyboard is open and the view is panned.
+      // We use this to translate the container so the input stays in view.
       setViewportOffset(viewport.offsetTop);
-      setViewportHeight(`${viewport.height}px`);
+      
+      // Use dynamic viewport height if possible, otherwise fallback to pixels
+      if (viewport.offsetTop === 0) {
+        setViewportHeight('100dvh');
+      } else {
+        setViewportHeight(`${viewport.height}px`);
+      }
 
       // Scroll to bottom when keyboard opens
       if (viewport.offsetTop > 0) {
@@ -67,6 +74,14 @@ export function ChatInterface() {
           bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       }
+    };
+
+    const handleReset = () => {
+      // Force reset when keyboard is likely closing
+      setViewportOffset(0);
+      setViewportHeight('100dvh');
+      // On some iOS versions, we need to scroll body to 0 to fix the "stuck" view
+      window.scrollTo(0, 0);
     };
 
     window.visualViewport.addEventListener('resize', handleResize);
@@ -230,9 +245,20 @@ export function ChatInterface() {
               handleSubmit(e);
             }
           }}
+          onBlur={() => {
+            // Force layout reset on blur as a fallback for iOS
+            setTimeout(() => {
+              setViewportOffset(0);
+              setViewportHeight('100dvh');
+              window.scrollTo(0, 0);
+            }, 100);
+          }}
           placeholder="输入以进行后续修改"
-          className="chat-input w-full px-2 py-[8px] bg-transparent text-[15px] outline-none placeholder-[var(--muted)]"
+          className="chat-input w-full px-2 py-[8px] bg-transparent text-[16px] outline-none placeholder-[var(--muted)]"
           autoFocus
+          enterKeyHint="send"
+          inputMode="text"
+          autoComplete="off"
         />
         
         <div className="flex items-center justify-between px-2">
