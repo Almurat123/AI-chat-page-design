@@ -1,0 +1,6 @@
+{
+  "name": "GPT 10-Theme Demo",
+  "description": "A responsive, full-stack GPT website clone featuring a sidebar, mock user system, model and thinking-level selectors, Day/Night mode switch, message history, chat bubbles (right for user, pure text left for AI), and 10 dynamic UI themes. Setup using an Express/Vite full-stack architecture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
