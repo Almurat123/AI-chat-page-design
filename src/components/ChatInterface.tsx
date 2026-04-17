@@ -1,3 +1,18 @@
+// CONTEXT MEMORY
+// Updated: 2026-04-17
+// Author: Antigravity
+// Reason: 适配 iOS 移动端浏览器软键盘。iOS Safari 弹出键盘时不调整 Layout Viewport，需通过 Visual Viewport API 修正位置。
+// Goal: 确保键盘弹出时输入框吸顶于键盘，且聊天记录区域不被遮挡。
+// Owns: 聊天界面的视口适配逻辑。
+// Document Provenance:
+// - Source: Visual Viewport API Spec / MDN
+// - Kind: Web API Reference
+// - Retrieved: 2026-04-17
+// - Applied To: ChatInterface layout container and input offset
+// - Verification: Verified via logic (using offsetTop and height)
+// See also:
+// - system-journal/INDEX.md
+
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Plus as PlusIcon, ArrowUp, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -25,9 +40,46 @@ export function ChatInterface() {
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'model' | 'thinking' | null>(null);
+  const [viewportOffset, setViewportOffset] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState('100dvh');
+  
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const currentSession = sessions.find(s => s.id === currentSessionId);
+
+  // iOS Keyboard Adaptation using Visual Viewport API
+  useEffect(() => {
+    if (!window.visualViewport) return;
+
+    const handleResize = () => {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+      
+      // offsetTop is the distance the visual viewport has been panned/scrolled 
+      // relative to the layout viewport (usually by the keyboard)
+      setViewportOffset(viewport.offsetTop);
+      setViewportHeight(`${viewport.height}px`);
+
+      // Scroll to bottom when keyboard opens
+      if (viewport.offsetTop > 0) {
+        setTimeout(() => {
+          bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    };
+
+    window.visualViewport.addEventListener('resize', handleResize);
+    window.visualViewport.addEventListener('scroll', handleResize);
+    
+    // Initial call
+    handleResize();
+
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('scroll', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -93,8 +145,13 @@ export function ChatInterface() {
   };
 
   const renderControlsInternal = () => {
-    const displayModelText = model === 'gemini-3-flash-preview' ? 'GPT-5.4-Mini' : 'Claude 3.7 Sonnet';
-    const displayThinkingText = thinkingLevel === ThinkingLevel.LOW ? '快速' : '极高深度';
+    const modelLabels: Record<string, string> = {
+      'qwen-turbo': 'Qwen-Turbo',
+      'qwen-plus': 'Qwen-Plus',
+      'qwen-max': 'Qwen-Max'
+    };
+    const displayModelText = modelLabels[model] || 'Qwen-Max';
+    const displayThinkingText = thinkingLevel === ThinkingLevel.LOW ? '快速模式' : '深度思考';
     return (
       <div className="flex items-center gap-4 pl-1">
         <button type="button" className="text-[var(--muted)] hover:text-foreground">
@@ -111,16 +168,22 @@ export function ChatInterface() {
           {activeDropdown === 'model' && (
             <div className="absolute bottom-full mb-3 left-0 w-44 bg-surface rounded-[12px] border border-border shadow-2xl py-1 z-50 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div 
-                className={cn("px-3 py-2 text-sm cursor-pointer hover:bg-[var(--surface-container-highest)]", model === 'gemini-3-flash-preview' && "bg-[var(--surface-container-highest)] text-foreground font-medium")}
-                onClick={() => { setModel('gemini-3-flash-preview'); setActiveDropdown(null); }}
+                className={cn("px-3 py-2 text-sm cursor-pointer hover:bg-[var(--surface-container-highest)]", model === 'qwen-turbo' && "bg-[var(--surface-container-highest)] text-foreground font-medium")}
+                onClick={() => { setModel('qwen-turbo'); setActiveDropdown(null); }}
               >
-                GPT-5.4-Mini
+                Qwen-Turbo
               </div>
               <div 
-                className={cn("px-3 py-2 text-sm cursor-pointer hover:bg-[var(--surface-container-highest)]", model === 'gemini-3.1-pro-preview' && "bg-[var(--surface-container-highest)] text-foreground font-medium")}
-                onClick={() => { setModel('gemini-3.1-pro-preview'); setActiveDropdown(null); }}
+                className={cn("px-3 py-2 text-sm cursor-pointer hover:bg-[var(--surface-container-highest)]", model === 'qwen-plus' && "bg-[var(--surface-container-highest)] text-foreground font-medium")}
+                onClick={() => { setModel('qwen-plus'); setActiveDropdown(null); }}
               >
-                Claude 3.7 Sonnet
+                Qwen-Plus
+              </div>
+              <div 
+                className={cn("px-3 py-2 text-sm cursor-pointer hover:bg-[var(--surface-container-highest)]", model === 'qwen-max' && "bg-[var(--surface-container-highest)] text-foreground font-medium")}
+                onClick={() => { setModel('qwen-max'); setActiveDropdown(null); }}
+              >
+                Qwen-Max
               </div>
             </div>
           )}
@@ -139,13 +202,13 @@ export function ChatInterface() {
                 className={cn("px-3 py-2 text-sm cursor-pointer hover:bg-[var(--surface-container-highest)]", thinkingLevel === ThinkingLevel.LOW && "bg-[var(--surface-container-highest)] text-foreground font-medium")}
                 onClick={() => { setThinkingLevel(ThinkingLevel.LOW); setActiveDropdown(null); }}
               >
-                快速
+                快速模式
               </div>
               <div 
                 className={cn("px-3 py-2 text-sm cursor-pointer hover:bg-[var(--surface-container-highest)]", thinkingLevel === ThinkingLevel.HIGH && "bg-[var(--surface-container-highest)] text-foreground font-medium")}
                 onClick={() => { setThinkingLevel(ThinkingLevel.HIGH); setActiveDropdown(null); }}
               >
-                极高深度
+                深度思考
               </div>
             </div>
           )}
@@ -190,7 +253,11 @@ export function ChatInterface() {
 
   if (!currentSession || currentSession.messages.length === 0) {
     return (
-      <div className="chat-viewport flex-1 flex flex-col h-full bg-surface relative overflow-hidden pt-14 lg:pt-0">
+      <div 
+        ref={containerRef}
+        style={{ height: viewportHeight, transform: `translateY(${viewportOffset}px)` }}
+        className="chat-viewport flex-1 flex flex-col bg-surface relative overflow-hidden pt-14 lg:pt-0"
+      >
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <div className="w-full max-w-3xl">
             <h1 className="text-4xl font-semibold mb-8 text-center text-foreground empty-title">如何能帮到您？</h1>
@@ -203,9 +270,18 @@ export function ChatInterface() {
   }
 
   return (
-    <div id="chat-interface-container" className="chat-viewport flex-1 flex flex-col h-full bg-surface relative overflow-hidden pt-14 lg:pt-0">
+    <div 
+      id="chat-interface-container" 
+      ref={containerRef}
+      style={{ height: viewportHeight, transform: `translateY(${viewportOffset}px)` }}
+      className="chat-viewport flex-1 flex flex-col bg-surface relative overflow-hidden pt-14 lg:pt-0"
+    >
       {/* Chat Messages */}
-      <div id="messages-scroller" className="chat-messages-container flex-1 overflow-y-auto w-full pb-[40px] pt-[20px] min-h-0">
+      <div 
+        id="messages-scroller" 
+        className="chat-messages-container flex-1 overflow-y-auto w-full pb-[40px] pt-[20px] min-h-0 overscroll-contain touch-pan-y"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         <div className="w-full max-w-3xl mx-auto px-4 flex flex-col gap-[32px]">
           {currentSession.messages.map((message) => (
             <div 

@@ -65,7 +65,7 @@ export const useStore = create<StoreState>()(
       user: { id: 'demo1', name: '张小明', avatar: '' },
       theme: 'default',
       isDarkMode: false,
-      model: 'gemini-3-flash-preview',
+      model: 'qwen-max',
       thinkingLevel: ThinkingLevel.LOW,
       sessions: [],
       currentSessionId: null,
